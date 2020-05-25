@@ -23,7 +23,7 @@ module.exports = function (sequelize, DataTypes) {
     );
 
     Casino.prototype.getBalanceAmount = function () {
-      return parseInt(this.BalanceAmount,10);
+      return parseFloat(this.BalanceAmount);
     };
 
     return Casino;

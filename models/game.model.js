@@ -17,17 +17,33 @@ module.exports = function (sequelize, Sequelize) {
             defaultValue: Sequelize.fn('now')
 
         },
-        endTime :{
+        endTime : {
             type: Sequelize.DataTypes.DATE,
             defaultValue: null
         },
 
         winningNumber:{
-            type: Sequelize.DataTypes.INTEGER
+            type: Sequelize.DataTypes.INTEGER,
+            defaultValue: null
         }
        
+    },
+    {
+        timestamps: false
     }
     );
+
+    Games.prototype.getGameID = function () {
+        return this.gameID;
+      };
+
+    Games.prototype.getCasinoID = function () {
+        return this.casinoID;
+      };
+
+    Games.prototype.getGameStatus = function() {
+        return this.status;
+    };    
 
     return Games;
 

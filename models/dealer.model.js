@@ -15,5 +15,9 @@ module.exports = function (sequelize, DataTypes) {
         },
       }
     );
+
+    Dealer.prototype.getCasinoID = function () {
+      return this.casinoID;
+    };
     return Dealer;
 };
