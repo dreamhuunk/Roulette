@@ -10,6 +10,7 @@ module.exports = function(err,req,res,next)
         return response.responseWriter(res,err.status,{message : err.message});
     }
     //TODO Logging has to be added
+    console.log(err.message);
     return response.responseWriter(res,500,{message: "Internal Error"});
 
 };

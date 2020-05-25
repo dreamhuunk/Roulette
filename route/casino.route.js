@@ -6,7 +6,6 @@ const router = express.Router();
 
 
 router.get('/:id(\\d+)/dealers',casino.listDealers);
-router.get('/:id/balance',casino.getBalance);
 
 router.post('/',casino.registerCasino);
 router.post('/:id(\\d+)/dealers', casino.addDealer);

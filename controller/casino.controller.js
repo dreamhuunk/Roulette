@@ -111,11 +111,3 @@ exports.listDealers = async function (req, res) {
     }
     return response.responseWriter(res,200,casinoDealers);
 };
-
-
-
-
-exports.getBalance = async function (req, res, next) {
-    return res.send("Obtaining Balance");
-};
-

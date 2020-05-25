@@ -10,7 +10,7 @@ module.exports = function (sequelize, DataTypes) {
           primaryKey: true,
           autoIncrement: true
         },
-        name: 
+        userName: 
         {
             type: DataTypes.STRING,
             allowNull: false,
@@ -23,6 +23,18 @@ module.exports = function (sequelize, DataTypes) {
         },
       }
     );
+
+    User.prototype.getUserID = function () {
+      return this.userID;
+    };
+
+    User.prototype.getUserName = function() {
+      return this.userName;
+    };
+
+    User.prototype.getBalanceAmount = function () {
+      return parseFloat(this.BalanceAmount);
+    };
 
     return User;
 
