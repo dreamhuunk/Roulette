@@ -44,6 +44,19 @@ module.exports = function (sequelize, Sequelize) {
       }
     );
 
+
+    Bets.prototype.getBetID = function () {
+      return this.betID;
+    };
+
+    Bets.prototype.getBetAmount = function() {
+      return this.betAmount;
+    };
+
+    Bets.prototype.getBetNumber = function() {
+      return this.betNumber;
+    };
+
     return Bets;
 
 };

@@ -75,6 +75,15 @@ class RouleteConstant {
         return "User already belong to a live game";
     }
 
+
+    static userDoesnotHaveSufficientBalance() {
+        return "You don't have sufficient balance to place this bet";
+    }
+
+    static userNotPresentInTheCasino() {
+        return "User has to be present in the casino to place bets";
+    }
+
 }
 
 module.exports = RouleteConstant;
