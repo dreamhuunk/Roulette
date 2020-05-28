@@ -180,7 +180,7 @@ const throwNumber = async function (req, res, game, gameID) {
         const winnerBets = await BetSummary.findAll({
             where: {
                 gameID: gameID,
-                betNumber: 1 //Testing replace with random number
+                betNumber: thrownNumber
             },
             transaction: t
         });
@@ -200,7 +200,7 @@ const throwNumber = async function (req, res, game, gameID) {
         await Messenger.send("endgame", {
             game_id: gameID,
             casino_id: game.getCasinoID(),
-            bet_number: 1 //Testing purpose it will be replaced by actual number
+            bet_number: thrownNumber
         });
         response.responseWriter(res, 200, { message: `Number ${thrownNumber} is the winner` });
 
