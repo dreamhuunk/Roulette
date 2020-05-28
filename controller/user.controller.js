@@ -65,11 +65,11 @@ exports.rechargeBalance = async function (req, res) {
             }
         }, { transaction: t })
             .then(async result => {
+                await t.commit();
                 let updatedUser = await User.findByPk(id);
                 return response.responseWriter(res, 200, { user_id: updatedUser.getUserID(), balance_amount: updatedUser.getBalanceAmount() });
             });
-        await t.commit();
-
+        
     } catch (error) {
 
         //Catch block is added for rollback purpose
@@ -81,8 +81,7 @@ exports.rechargeBalance = async function (req, res) {
 
 
 
-const checkUserPresenceInCasino = async function (userID,casinoID,isFromBets)
-{
+const checkUserPresenceInCasino = async function (userID, casinoID, isFromBets) {
     const userCasino = await UserCasino.findAll({
         where: {
             userID: userID,
@@ -96,8 +95,7 @@ const checkUserPresenceInCasino = async function (userID,casinoID,isFromBets)
         if (userCasinoID !== casinoID) {
             throw new RouletteError(ErrorConstant.userPresentInDifferentCasino(), 400);
         }
-        if(!isFromBets)
-        {
+        if (!isFromBets) {
             {
                 throw new RouletteError(ErrorConstant.userIsAlreadyPresentInCasino(), 400);
             }
@@ -107,8 +105,7 @@ const checkUserPresenceInCasino = async function (userID,casinoID,isFromBets)
 
     //User has to be present in a casino to make bets
 
-    else if(isFromBets)
-    {
+    else if (isFromBets) {
         throw new RouletteError(ErrorConstant.userNotPresentInTheCasino(), 400);
     }
 };
@@ -122,7 +119,7 @@ exports.enterCasino = async function (req, res) {
 
     await verifyUserAndCasino(req, res, id, casinoID);
 
-    await checkUserPresenceInCasino(id,casinoID,false);
+    await checkUserPresenceInCasino(id, casinoID, false);
 
     await UserCasino.create({
         userID: id,
@@ -262,7 +259,7 @@ const placeBet = async function (req, res, userID, gameID, gameCasinoID, hasUser
 
     const t = await db.sequelize.transaction();
     try {
-        
+
 
         //Using a transaction here so that balanceAmount doesn't turn out to be inconsistent
 
@@ -319,15 +316,16 @@ const placeBet = async function (req, res, userID, gameID, gameCasinoID, hasUser
                     }
                 }
 
-               
-                
-                await Messenger.send("taskengine",{bet_id : betRow.getBetID(),
-                     user_id: betRow.getUserID(),
-                     game_id: betRow.getGameID(),
-                     bet_number : betRow.getBetNumber()
-                    });
+
+
+                await Messenger.send("taskengine", {
+                    bet_id: betRow.getBetID(),
+                    user_id: betRow.getUserID(),
+                    game_id: betRow.getGameID(),
+                    bet_number: betRow.getBetNumber()
+                });
                 //If it has safely reached this point we can commit and return
-                await t.commit();    
+                await t.commit();
                 return response.responseWriter(res, 200, { bet_amount: betRow.getBetAmount(), bet_number: betRow.getBetNumber() });
 
             }
@@ -354,9 +352,9 @@ exports.betOnGame = async function (req, res) {
     const casinoID = parseInt(req.params["casino_id"], 10);
 
     await verifyUserAndCasino(req, res, id, casinoID);
-    
+
     //We have to check if user exists in the casino he is issuing the bets on
-    await checkUserPresenceInCasino(id,casinoID,true);
+    await checkUserPresenceInCasino(id, casinoID, true);
 
     let gameID = req.body['game_id'];
 
@@ -368,6 +366,107 @@ exports.betOnGame = async function (req, res) {
     let hasUserPlacedBetBefore = await checkIfUserhasActiveGame(req, res, id, gameID);
 
     return await placeBet(req, res, id, gameID, gamecasinoID, hasUserPlacedBetBefore);
+};
+
+
+
+exports.cashOutFromCasino = async function (req, res) {
+
+    const userID = req.params.id;
+
+    const casinoID = req.body['casino_id'];
+
+    //Validation Checks
+
+    await verifyUserAndCasino(req, res, userID, casinoID);
+
+    await checkUserPresenceInCasino(userID, casinoID, true);
+
+
+
+    const t = await db.sequelize.transaction();
+
+    try {
+        const user = await User.findOne({
+            where: {
+                userID: userID
+            },
+            transaction: t
+        });
+
+        const casino = await Casino.findOne({
+            where: {
+                casinoID: casinoID
+            },
+            transaction: t
+        });
+
+        let userBalance = user.getBalanceAmount();
+
+        let casinoBalance = casino.getBalanceAmount();
+
+        if (userBalance > casinoBalance) {
+            throw new RouletteError(ErrorConstant.casinoDoesnotHaveSufficientBalance(), 400);
+        }
+
+        let updatedCasinoBalance = casinoBalance - userBalance;
+
+        let updatedCasinoRows = await Casino.update({
+            BalanceAmount: updatedCasinoBalance
+        }, {
+            where: {
+                casinoID: casinoID
+            },
+            transaction: t
+        });
+
+        if (!updatedCasinoRows) {
+            throw new Error();
+        }
+
+
+        //User has cashed out hence balance is set to 0 in a real life scenario he would have receieved balance in bank
+
+        let updatedUserRows = await User.update({
+            BalanceAmount: 0.00
+        }, {
+            where: {
+                userID: userID
+            },
+            transaction: t
+        });
+
+
+        if (!updatedUserRows) {
+            throw new Error();
+        }
+
+
+        //Finally update checkedout status
+
+        let userCasinoRows = await UserCasino.update({
+            userStatus: false
+        }, {
+            where: {
+                userID: userID,
+                casinoID: casinoID
+            },
+            transaction: t
+        });
+
+        if (!userCasinoRows) {
+            throw new Error();
+        }
+
+        await t.commit();
+        response.responseWriter(res, 200, { message: "User Successfully cashed out" });
+    }
+    catch (err) {
+        await t.rollback();
+        throw err;
+    }
+
+
 };
 
 

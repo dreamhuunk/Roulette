@@ -47,9 +47,21 @@ Casino.hasMany(Games, { foreignKey: 'casinoID', sourceKey: 'casinoID' });
 //User can be present in one casino at a time
 //CurrentCasino has to be tracked as per provided resources hence opting for this
 
-User.belongsToMany(Casino, {through : UserCasino, foreignKey: 'userID', otherKey: 'CasinoID'});
 
-Casino.belongsToMany(User, {through : UserCasino, foreignKey: 'casinoID', otherKey: 'userID'});
+/*
+   ORM Frame work limitation it adds an unwanted unqiue key constraint between user ID and casino meaning user can't enter same casino after cashout
+   No resoultion for this issue for 4 years
+   https://github.com/sequelize/sequelize/issues/3493
+*/
+
+// User.belongsToMany(Casino, {unique: false,through : UserCasino, foreignKey: 'userID', otherKey: 'casinoID'});
+
+// Casino.belongsToMany(User, {unique: false,through : UserCasino, foreignKey: 'casinoID', otherKey: 'userID'});
+
+//Work Around
+
+User.hasMany(UserCasino,{ foreignKey: {name: 'userID', allowNull : false}, sourceKey: 'userID', onDelete: 'CASCADE'});
+Casino.hasMany(UserCasino,{ foreignKey: {name: 'casinoID', allowNull : false}, sourceKey: 'casinoID', onDelete: 'CASCADE'});
 
 
 

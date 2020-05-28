@@ -81,8 +81,13 @@ class RouleteConstant {
     }
 
     static userNotPresentInTheCasino() {
-        return "User has to be present in the casino to place bets";
+        return "User has to be present in the casino to place bets/cashout";
     }
+
+    static casinoDoesnotHaveSufficientBalance() {
+        return "Casino doesn't have sufficient balance";
+    }
+
 
 }
 

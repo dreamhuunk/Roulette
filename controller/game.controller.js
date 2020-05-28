@@ -4,6 +4,7 @@ const Sequelize = db.Sequelize;
 
 const Dealer = db.dealer;
 const Game = db.games;
+const User = db.user;
 
 const BetSummary = db.betSummary;
 
@@ -16,6 +17,8 @@ const Enums = require('../utils/enums');
 const GAME_ACTION = Enums.GAMEACTION;
 
 const GAME_STATUS = Enums.GAMESTATUS;
+
+const Messenger = require('../utils/messenger');
 
 
 //TO DO any one knowing the Dealer ID can create game have to implement permissions
@@ -157,8 +160,6 @@ const throwNumber = async function (req, res, game, gameID) {
 
         let thrownNumber = Math.floor(Math.random() * 36) + 1;
 
-
-
         const updatedRows = await Game.update({
             status: 2,
             winningNumber: thrownNumber,
@@ -170,8 +171,7 @@ const throwNumber = async function (req, res, game, gameID) {
             transaction: t
         });
 
-        if(!updatedRows)
-        {
+        if (!updatedRows) {
             throw Error();
         }
 
@@ -181,40 +181,28 @@ const throwNumber = async function (req, res, game, gameID) {
             where: {
                 gameID: gameID,
                 betNumber: 1 //Testing replace with random number
-            }
+            },
+            transaction: t
         });
 
 
-        if (winnerBets && winnerBets.length ==0) {
+        if (winnerBets && winnerBets.length == 0) {
             console.log("winner Summarry is empty");
-            response.responseWriter(res,200,{message : "Guess no luck today for anyone casino won it all"});
-            await t.commit();  
+            response.responseWriter(res, 200, { message: "Guess no luck today for anyone casino won it all" });
         }
 
-        else
-        {
-
-            winnerBets.forEach(
-                (bet) => {
-
-                    const userID = bet.getUserID();
-                    const totalBetAmount = bet.getTotalBetAmount();
-
-                    let updatedTotal = 2 * totalBetAmount;
-
-                    let updatedRows = 1;
-
-
-
-                }
-            );
-
-            await t.commit();
+        else {
+            for (const bets of winnerBets) {
+                await userUpdate(bets, t);
+            }
         }
-
-
-        
-
+        await t.commit();
+        await Messenger.send("endgame", {
+            game_id: gameID,
+            casino_id: game.getCasinoID(),
+            bet_number: 1 //Testing purpose it will be replaced by actual number
+        });
+        response.responseWriter(res, 200, { message: `Number ${thrownNumber} is the winner` });
 
     }
     catch (error) {
@@ -222,4 +210,42 @@ const throwNumber = async function (req, res, game, gameID) {
         await t.rollback();
         throw error;
     }
+};
+
+const userUpdate = async function (bet, t) {
+    const userID = bet.getUserID();
+    const totalBetAmount = bet.getTotalBetAmount();
+    let updatedTotal = 2 * totalBetAmount;
+
+    console.log(userID);
+
+
+    let user = await User.findOne({
+        where: {
+            userID: userID
+        },
+        transaction: t
+    });
+
+    if (!user) {
+        throw new Error();
+    }
+
+    let existingBalance = user.getBalanceAmount();
+
+    let totalBalance = updatedTotal + existingBalance;  //Winning amount * 2 + existingBalance
+
+    let updatedRows = await User.update({
+        BalanceAmount: totalBalance
+    },
+        {
+            where: {
+                userID: userID
+            },
+            transaction: t
+        });
+    if (!updatedRows) {
+        throw new Error();
+    }
+
 };

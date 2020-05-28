@@ -6,6 +6,12 @@
 module.exports = function (sequelize, Sequelize) {
 
     const casinoUser = sequelize.define('casinoUser', {
+        id: {
+            type: Sequelize.DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+            allowNull: false
+        },
         userStatus: {
             type: Sequelize.BOOLEAN,
             defaultValue: true

@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.post('/',user.registerUser);
 router.post('/:id(\\d+)/casinos/:casino_id(\\d+)/bets',user.betOnGame);
+router.post('/:id(\\d+)/cashout',user.cashOutFromCasino);
 
 //Adding additional API to get the list of casinos
 

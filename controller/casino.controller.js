@@ -44,7 +44,7 @@ exports.rechargeBalance = async function (req, res, next) {
             throw new RouletteError(ErrorConstant.casinoNotFoundMsg(), 404);
         }
 
-        await Casino.update({
+        let updatedRows = await Casino.update({
             BalanceAmount: casino.getBalanceAmount() + req.body.BalanceAmount
         }, {
             where: {
@@ -53,10 +53,11 @@ exports.rechargeBalance = async function (req, res, next) {
             transaction: t
         })
             .then(async result => {
+                await t.commit();
                 let updatedCasino = await Casino.findByPk(id);
-                return response.responseWriter(res, 200, updatedCasino);
+                return response.responseWriter(res, 200, { casino_id: updatedCasino.getCasinoID(), balance_amount: updatedCasino.getBalanceAmount() });
             });
-        await t.commit();
+
 
     } catch (error) {
 
@@ -79,12 +80,12 @@ exports.addDealer = async function (req, res, next) {
 
     await Dealer.create({
         name: req.body.name,
-        casinoID : casinoID
+        casinoID: casinoID
     })
-    .then( result => {
-        return response.responseWriter(res,200,result);
-    });
-        
+        .then(result => {
+            return response.responseWriter(res, 200, result);
+        });
+
 };
 
 
@@ -98,17 +99,16 @@ exports.listDealers = async function (req, res) {
 
     let casinoDealers = {
         casinoID: casinoID,
-        dealers : []
+        dealers: []
     };
     dealers = await Dealer.findAll({
-        attributes : ['name','DealerID'],
-        where : {
-            casinoID : casinoID
+        attributes: ['name', 'DealerID'],
+        where: {
+            casinoID: casinoID
         }
     });
-    if(dealers)
-    {
+    if (dealers) {
         casinoDealers.dealers = dealers;
     }
-    return response.responseWriter(res,200,casinoDealers);
+    return response.responseWriter(res, 200, casinoDealers);
 };
