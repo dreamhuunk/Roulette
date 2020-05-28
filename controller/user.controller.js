@@ -16,6 +16,8 @@ const UserGames = db.userGames;
 
 const GAME_STATUS = Enum.GAMESTATUS;
 
+const Messenger = require('../utils/messenger');
+
 
 exports.registerUser = async function (req, res) {
 
@@ -268,9 +270,10 @@ const placeBet = async function (req, res, userID, gameID, gameCasinoID, hasUser
             {
                 where: {
                     userID: userID
-                }
+                },
+                transaction: t
 
-            }, { transaction: t });
+            });
 
 
         //All validation are done  we can simply get the bet amount
@@ -300,8 +303,9 @@ const placeBet = async function (req, res, userID, gameID, gameCasinoID, hasUser
         }, {
             where: {
                 userID: userID
-            }
-        }, { transaction: t });
+            },
+            transaction: t
+        });
 
         //If rows are updated successfully
         if (updatedRows) {
@@ -315,8 +319,15 @@ const placeBet = async function (req, res, userID, gameID, gameCasinoID, hasUser
                     }
                 }
 
+               
+                
+                await Messenger.send("taskengine",{bet_id : betRow.getBetID(),
+                     user_id: betRow.getUserID(),
+                     game_id: betRow.getGameID(),
+                     bet_number : betRow.getBetNumber()
+                    });
                 //If it has safely reached this point we can commit and return
-                await t.commit();
+                await t.commit();    
                 return response.responseWriter(res, 200, { bet_amount: betRow.getBetAmount(), bet_number: betRow.getBetNumber() });
 
             }

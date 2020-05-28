@@ -5,6 +5,8 @@ const Sequelize = db.Sequelize;
 const Dealer = db.dealer;
 const Game = db.games;
 
+const BetSummary = db.betSummary;
+
 const response = require('../utils/response');
 const RouletteError = require('../errors/RouletteError');
 const ErrorConstant = require('../errors/errorhandling');
@@ -116,8 +118,9 @@ const stopGame = async function (req, res, game, gameID) {
         }, {
             where: {
                 gameID: gameID
-            }
-        }, { transaction: t })
+            },
+            transaction: t
+        })
             .then(async result => {
                 return response.responseWriter(res, 200, { game_id: gameID, message: "Game has been Stopped Successfully" });
             });
@@ -151,21 +154,67 @@ const throwNumber = async function (req, res, game, gameID) {
     //TO-DO handling for calculating winners
 
     try {
-        
+
         let thrownNumber = Math.floor(Math.random() * 36) + 1;
-        await Game.update({
+
+
+
+        const updatedRows = await Game.update({
             status: 2,
-            winningNumber: thrownNumber
+            winningNumber: thrownNumber,
+            endTime: db.sequelize.literal('CURRENT_TIMESTAMP')
         }, {
             where: {
                 gameID: gameID
-            }
-        }, { transaction: t })
-            .then(async result => {
-                return response.responseWriter(res, 200, { game_id: gameID, message: "Winners are calculated successfully" });
-            });
+            },
+            transaction: t
+        });
 
-        await t.commit();
+        if(!updatedRows)
+        {
+            throw Error();
+        }
+
+        //Game has ended so get the value from Bet Summary Table for the given gameID and thrown number double the value and update in DB
+
+        const winnerBets = await BetSummary.findAll({
+            where: {
+                gameID: gameID,
+                betNumber: 1 //Testing replace with random number
+            }
+        });
+
+
+        if (winnerBets && winnerBets.length ==0) {
+            console.log("winner Summarry is empty");
+            response.responseWriter(res,200,{message : "Guess no luck today for anyone casino won it all"});
+            await t.commit();  
+        }
+
+        else
+        {
+
+            winnerBets.forEach(
+                (bet) => {
+
+                    const userID = bet.getUserID();
+                    const totalBetAmount = bet.getTotalBetAmount();
+
+                    let updatedTotal = 2 * totalBetAmount;
+
+                    let updatedRows = 1;
+
+
+
+                }
+            );
+
+            await t.commit();
+        }
+
+
+        
+
 
     }
     catch (error) {

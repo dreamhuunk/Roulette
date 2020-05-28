@@ -26,6 +26,7 @@ const Games = require('../models/game.model')(sequelize, Sequelize);
 const User = require('../models/user.model')(sequelize, Sequelize.DataTypes);
 const Bets = require('../models/bet.model')(sequelize, Sequelize);
 const UserGames = require('../models/user.games.model')(sequelize, Sequelize);
+const BetSummary = require('../models/bet.summary.model')(sequelize,Sequelize);
 
 const UserCasino = require('../models/user.casino.model')(sequelize,Sequelize);
 
@@ -64,6 +65,12 @@ User.belongsToMany(Games, { through: UserGames, foreignKey: 'userID', otherKey: 
 Games.belongsToMany(User, { through: UserGames, foreignKey: 'gameID', otherKey: 'userID' });
 
 
+ BetSummary.belongsTo(User, { foreignKey:  {name : 'userID',allowNull: false}, sourceKey: 'userID', onDelete: 'CASCADE' });
+ User.hasMany(BetSummary, { foreignKey: {name: 'userID',allowNull: false } , sourceKey: 'userID', onDelete: 'CASCADE' });
+
+
+BetSummary.belongsTo(Games, { foreignKey:  {name : 'gameID',allowNull: false}, sourceKey: 'gameID', onDelete: 'CASCADE' });
+Games.hasMany(BetSummary, { foreignKey: {name: 'gameID', allowNull : false}, sourceKey: 'gameID', onDelete: 'CASCADE' });
 
 
 db.casino = Casino;
@@ -73,6 +80,7 @@ db.user = User;
 db.bets = Bets;
 db.userGames = UserGames;
 db.userCasino = UserCasino;
+db.betSummary = BetSummary;
 
 module.exports = db;
 

@@ -49,8 +49,9 @@ exports.rechargeBalance = async function (req, res, next) {
         }, {
             where: {
                 casinoID: id
-            }
-        }, { transaction: t })
+            },
+            transaction: t
+        })
             .then(async result => {
                 let updatedCasino = await Casino.findByPk(id);
                 return response.responseWriter(res, 200, updatedCasino);

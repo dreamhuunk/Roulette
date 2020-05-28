@@ -50,11 +50,19 @@ module.exports = function (sequelize, Sequelize) {
     };
 
     Bets.prototype.getBetAmount = function() {
-      return this.betAmount;
+      return parseFloat(this.betAmount);
     };
 
     Bets.prototype.getBetNumber = function() {
       return this.betNumber;
+    };
+
+    Bets.prototype.getUserID = function() {
+      return this.userID;
+    };
+
+    Bets.prototype.getGameID = function() {
+      return this.gameID;
     };
 
     return Bets;
