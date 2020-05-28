@@ -1,3 +1,4 @@
+/*jshint sub:true*/
 
 const db = require('../config/db.config');
 const Casino = db.casino;
@@ -13,7 +14,11 @@ const ErrorConstant = require('../errors/errorhandling');
 //To Do getting value from req.body change to middlewere
 
 exports.registerCasino = async function (req, res, next) {
-    await Casino.create(req.body)
+
+    let casinoObj = {
+        name : req.body['name']
+    };
+    await Casino.create(casinoObj)
         .then(casino => {
             response.responseWriter(res, 200, casino);
         })
@@ -40,12 +45,14 @@ exports.rechargeBalance = async function (req, res, next) {
         const id = parseInt(req.params.id, 10);
         let casino = await Casino.findByPk(id);
 
+        let casinoBalanceAmount  = req.body['balance_amount'];
+
         if (!casino) {
             throw new RouletteError(ErrorConstant.casinoNotFoundMsg(), 404);
         }
 
         let updatedRows = await Casino.update({
-            BalanceAmount: casino.getBalanceAmount() + req.body.BalanceAmount
+            BalanceAmount: casino.getBalanceAmount() + casinoBalanceAmount
         }, {
             where: {
                 casinoID: id
@@ -74,16 +81,19 @@ exports.addDealer = async function (req, res, next) {
     //TO DO casino Should be ID 
     const casinoID = parseInt(req.params.id, 10);
     const casino = await Casino.findByPk(casinoID);
+
+    const dealerName = req.body['dealer_name'];
+
     if (!casino) {
         throw new RouletteError(ErrorConstant.casinoNotFoundMsg(), 404);
     }
 
     await Dealer.create({
-        name: req.body.name,
+        name: dealerName,
         casinoID: casinoID
     })
-        .then(result => {
-            return response.responseWriter(res, 200, result);
+        .then(dealer => {
+            return response.responseWriter(res, 200, {dealer_id: dealer.getDealerID(),casinoID: dealer.getCasinoID(),message:"Dealer Added Successfully"});
         });
 
 };

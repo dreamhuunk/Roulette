@@ -1,3 +1,4 @@
+/*jshint sub:true*/
 const db = require('../config/db.config');
 
 const Sequelize = db.Sequelize;
@@ -27,7 +28,7 @@ exports.createGame = async function (req, res) {
 
     //TODO node name has to be changed
 
-    let dealerID = req.body.DealerID;
+    let dealerID = req.body['dealer_id'];
 
     let dealer = await Dealer.findByPk(dealerID);
 
@@ -57,7 +58,7 @@ exports.updateGame = async function (req, res) {
 
     //Checking if the dealer is valid
 
-    let dealerID = req.body.DealerID;
+    let dealerID = req.body['dealer_id'];
 
     let dealer = await Dealer.findByPk(dealerID);
 
@@ -188,13 +189,16 @@ const throwNumber = async function (req, res, game, gameID) {
 
         if (winnerBets && winnerBets.length == 0) {
             console.log("winner Summarry is empty");
-            response.responseWriter(res, 200, { message: "Guess no luck today for anyone casino won it all" });
+            await t.commit();
+            return response.responseWriter(res, 200, { message: "Guess no luck today for anyone casino won it all" });
+            
         }
 
         else {
             for (const bets of winnerBets) {
                 await userUpdate(bets, t);
             }
+            
         }
         await t.commit();
         await Messenger.send("endgame", {
@@ -202,7 +206,7 @@ const throwNumber = async function (req, res, game, gameID) {
             casino_id: game.getCasinoID(),
             bet_number: thrownNumber
         });
-        response.responseWriter(res, 200, { message: `Number ${thrownNumber} is the winner` });
+        return response.responseWriter(res, 200, { message: `Number ${thrownNumber} is the winner` });
 
     }
     catch (error) {
