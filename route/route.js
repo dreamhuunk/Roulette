@@ -21,4 +21,11 @@ router.use('/api/v1/games',game);
 
 router.use('/api/v1/users',user);
 
+
+//Common error for unknown route
+
+router.use('*',(req,res)=>{
+    return res.status(404).send("not_found").json();
+});
+
 module.exports = router;
